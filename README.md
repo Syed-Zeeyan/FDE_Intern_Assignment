@@ -2,7 +2,8 @@
 
 A production-ready real-time data synchronization platform that seamlessly syncs data between Google Sheets and MySQL databases with live WebSocket updates and a modern analytics dashboard.
 
-![Dashboard Screenshot](C:/Users/syedz/.gemini/antigravity/brain/c6daa9bf-0088-43c0-b1b5-6896bfc852eb/final_dashboard_view_complete_1766685845809.png)
+<img width="1884" height="904" alt="image" src="https://github.com/user-attachments/assets/132e97ea-e666-42e8-9fb5-696db84529d1" />
+
 
 ---
 
@@ -407,10 +408,11 @@ docker-compose restart sync-mysql-target
 
 ---
 
-## 📸 Screenshots
+## 📸 Screenshot
 
-### Dashboard UI
-![Dark Analytics Dashboard](C:/Users/syedz/.gemini/antigravity/brain/c6daa9bf-0088-43c0-b1b5-6896bfc852eb/final_dashboard_view_complete_1766685845809.png)
+### Console
+<img width="884" height="687" alt="image" src="https://github.com/user-attachments/assets/60ec50e4-32d2-4b43-8c09-19d961add3ab" />
+
 
 ### Real-Time Activity Timeline
 The timeline shows live events as they occur:
