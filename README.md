@@ -4,6 +4,11 @@ A production-ready real-time data synchronization platform that seamlessly syncs
 
 <img width="1884" height="904" alt="image" src="https://github.com/user-attachments/assets/132e97ea-e666-42e8-9fb5-696db84529d1" />
 
+## Submission Notes
+- This project is designed as a production-style demo, not a full-scale deployment.
+- Sync execution is inline for immediate feedback.
+- Architecture and code are structured to support async scaling via queues.
+- Docker is used for reproducibility and ease of evaluation.
 
 ---
 
