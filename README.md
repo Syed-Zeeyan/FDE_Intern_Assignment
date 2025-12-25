@@ -322,6 +322,10 @@ npm run dev
 ```
 
 **Backend will run at:** `http://localhost:3001`
+> Note:
+> Google Sheets access uses a Service Account. Since each user will generate
+> their own service account, the sample Google Sheet must be shared with
+> their service account email OR duplicated into their own Google Drive.
 
 ### 4. Frontend Setup
 ```bash
