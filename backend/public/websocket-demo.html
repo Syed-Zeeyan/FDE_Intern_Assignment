@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Platform - WebSocket Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        .status {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+            animation: pulse 2s infinite;
+        }
+        .dot.connected { background: #10b981; }
+        .dot.disconnected { background: #ef4444; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .events {
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .event {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .event-type {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .event.started { border-left-color: #3b82f6; }
+        .event.started .event-type { color: #3b82f6; }
+        .event.completed { border-left-color: #10b981; }
+        .event.completed .event-type { color: #10b981; }
+        .event.conflict { border-left-color: #f59e0b; }
+        .event.conflict .event-type { color: #f59e0b; }
+        .event.failed { border-left-color: #ef4444; }
+        .event.failed .event-type { color: #ef4444; }
+        .event.dlq { border-left-color: #9333ea; }
+        .event.dlq .event-type { color: #9333ea; }
+        .event-data {
+            font-size: 0.9em;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 5px;
+        }
+        .clear-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .clear-btn:hover { background: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Sync Platform WebSocket</h1>
+            <p>Real-time sync lifecycle events</p>
+        </div>
+        
+        <div class="status">
+            <div class="status-indicator">
+                <div class="dot" id="statusDot"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+            <button class="clear-btn" onclick="clearEvents()">Clear Events</button>
+        </div>
+        
+        <div class="events" id="events">
+            <div style="text-align: center; color: #999; padding: 40px;">
+                Waiting for sync events...
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io('http://localhost:3001');
+        const eventsContainer = document.getElementById('events');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        // Connection events
+        socket.on('connect', () => {
+            statusDot.className = 'dot connected';
+            statusText.textContent = 'Connected';
+            console.log('Connected to WebSocket');
+        });
+
+        socket.on('disconnect', () => {
+            statusDot.className = 'dot disconnected';
+            statusText.textContent = 'Disconnected';
+            console.log('Disconnected from WebSocket');
+        });
+
+        socket.on('connected', (data) => {
+            console.log('Welcome message:', data);
+        });
+
+        // Sync events
+        socket.on('sync:started', (data) => {
+            addEvent('started', 'Sync Started', data);
+        });
+
+        socket.on('sync:completed', (data) => {
+            addEvent('completed', 'Sync Completed', data);
+        });
+
+        socket.on('sync:conflict', (data) => {
+            addEvent('conflict', 'Conflict Detected', data);
+        });
+
+        socket.on('sync:failed', (data) => {
+            addEvent('failed', 'Sync Failed', data);
+        });
+
+        socket.on('dlq:added', (data) => {
+            addEvent('dlq', 'Dead Letter Queue', data);
+        });
+
+        function addEvent(type, title, data) {
+            // Remove placeholder
+            if (eventsContainer.children.length === 1 && eventsContainer.children[0].textContent.includes('Waiting')) {
+                eventsContainer.innerHTML = '';
+            }
+
+            const event = document.createElement('div');
+            event.className = `event ${type}`;
+            
+            const typeDiv = document.createElement('div');
+            typeDiv.className = 'event-type';
+            typeDiv.textContent = title;
+            
+            const dataDiv = document.createElement('div');
+            dataDiv.className = 'event-data';
+            dataDiv.textContent = JSON.stringify(data, null, 2);
+            
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'timestamp';
+            timestampDiv.textContent = new Date(data.timestamp).toLocaleString();
+            
+            event.appendChild(typeDiv);
+            event.appendChild(dataDiv);
+            event.appendChild(timestampDiv);
+            
+            eventsContainer.insertBefore(event, eventsContainer.firstChild);
+            
+            // Limit to 50 events
+            while (eventsContainer.children.length > 50) {
+                eventsContainer.removeChild(eventsContainer.lastChild);
+            }
+        }
+
+        function clearEvents() {
+            eventsContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;">Waiting for sync events...</div>';
+        }
+    </script>
+</body>
+</html>

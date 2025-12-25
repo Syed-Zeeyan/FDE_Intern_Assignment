@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # PostgreSQL (Metadata DB)
+  postgres:
+    image: postgres:15-alpine
+    container_name: sync-postgres
+    environment:
+      POSTGRES_DB: sheets_sync_metadata
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/database/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (Queue & Cache)
+  redis:
+    image: redis:7-alpine
+    container_name: sync-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # MySQL (Target DB - for demo/testing)
+  mysql:
+    image: mysql:8.0
+    container_name: sync-mysql-target
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql_dev_password
+      MYSQL_DATABASE: test_database
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    # - ./backend/src/database/migrations/mysql_cdc_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-pmysql_dev_password" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+  mysql_data:
+
+
+networks:
+  default:
+    name: sync-network
